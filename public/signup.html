@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Đăng ký</title>
+</head>
+<body>
+  <h2>Đăng ký người dùng</h2>
+  <form id="signupForm">
+    <input type="text" name="name" placeholder="Họ tên" required /><br />
+    <input type="email" name="email" placeholder="Email" required /><br />
+    <input type="password" name="password" placeholder="Mật khẩu" required /><br />
+    <select name="role">
+      <option value="student">Học sinh</option>
+      <option value="teacher">Giáo viên</option>
+    </select><br />
+    <button type="submit">Đăng ký</button>
+  </form>
+
+  <script>
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const form = e.target;
+      const data = {
+        name: form.name.value,
+        email: form.email.value,
+        password: form.password.value,
+        role: form.role.value
+      };
+
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+      alert(result.message);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Thêm Câu Hỏi Trắc Nghiệm</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding: 40px;
+      background-color: #f4f7fa;
+      font-family: Arial, sans-serif;
+    }
+    .form-container {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h3 class="text-center mb-4">➕ Thêm Câu Hỏi Cho Khóa Học</h3>
+    <form id="questionForm">
+      <div class="mb-3">
+        <label for="courseId" class="form-label">ID Khóa học</label>
+        <input type="text" id="courseId" name="courseId" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label for="question" class="form-label">Câu hỏi</label>
+        <input type="text" id="question" name="question" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Các lựa chọn</label>
+        <input type="text" class="form-control mb-2" name="option" placeholder="Đáp án 1" required>
+        <input type="text" class="form-control mb-2" name="option" placeholder="Đáp án 2" required>
+        <input type="text" class="form-control mb-2" name="option" placeholder="Đáp án 3" required>
+        <input type="text" class="form-control mb-2" name="option" placeholder="Đáp án 4" required>
+      </div>
+      <div class="mb-3">
+        <label for="correctIndex" class="form-label">Chỉ số đáp án đúng (0-3)</label>
+        <input type="number" id="correctIndex" name="correctIndex" min="0" max="3" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Lưu câu hỏi</button>
+    </form>
+    <div id="status" class="text-center mt-3"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('questionForm');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const options = [...form.querySelectorAll('input[name="option"]')].map(input => input.value.trim());
+
+      const payload = {
+        courseId: formData.get('courseId'),
+        question: formData.get('question'),
+        options,
+        correctIndex: parseInt(formData.get('correctIndex'))
+      };
+
+      try {
+        const res = await fetch('/api/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          status.innerHTML = `<span class='text-success'>✅ ${data.message}</span>`;
+          form.reset();
+        } else {
+          status.innerHTML = `<span class='text-danger'>❌ ${data.message || 'Lỗi không xác định'}</span>`;
+        }
+      } catch (err) {
+        status.innerHTML = `<span class='text-danger'>❌ Lỗi hệ thống: ${err.message}</span>`;
+      }
+    });
+  </script>
+</body>
+</html>

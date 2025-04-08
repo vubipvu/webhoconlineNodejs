@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Sinh Viên</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-success px-4">
+    <span class="navbar-brand">📘 Xin chào, sinh viên!</span>
+    <div class="ms-auto">
+      <button class="btn btn-light btn-sm" onclick="logout()">🚪 Đăng xuất</button>
+    </div>
+  </nav>
+
+  <div class="container mt-5">
+    <div class="text-center">
+      <h2 class="mb-4">🎉 Chào mừng bạn đã đăng nhập với quyền <strong>sinh viên</strong></h2>
+      <a href="/chat.html" class="btn btn-outline-primary btn-sm mt-3">💬 Vào phòng chat</a>
+    </div>
+
+    <div class="text-center mb-4">
+      <h2>📚 Danh sách khóa học</h2>
+      <p class="text-muted">Các khóa học hiện có trong hệ thống:</p>
+    </div>
+    <div class="row" id="courseList">
+      <div class="text-center text-secondary">Đang tải...</div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchCourses() {
+      const res = await fetch('/api/courses');
+      const courses = await res.json();
+      const courseList = document.getElementById('courseList');
+      courseList.innerHTML = '';
+
+      if (!Array.isArray(courses) || courses.length === 0) {
+        courseList.innerHTML = '<div class="text-center text-muted">Không có khóa học nào.</div>';
+        return;
+      }
+
+      courses.forEach(course => {
+        const col = document.createElement('div');
+        col.className = 'col-md-4 mb-4';
+
+        col.innerHTML = `
+          <div class="card h-100 shadow-sm">
+            <img src="/images/${course.image}" class="card-img-top" style="height: 180px; object-fit: cover;">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">${course.title}</h5>
+              <p class="card-text text-muted">${course.description}</p>
+              <div class="mt-auto">
+                <button class="btn btn-primary w-100 mb-2" onclick="enrollCourse('${course._id}', this)">Đăng ký</button>
+                <a href="/quiz.html?courseId=${course._id}" class="btn btn-outline-warning w-100">📘 Làm bài kiểm tra</a>
+              </div>
+            </div>
+          </div>
+        `;
+        courseList.appendChild(col);
+      });
+    }
+
+    async function enrollCourse(courseId, button) {
+      const token = localStorage.getItem('token');
+      if (!token) return alert('Bạn chưa đăng nhập');
+
+      button.disabled = true;
+      button.innerText = 'Đang đăng ký...';
+
+      const res = await fetch(`/api/student/enroll/${courseId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        alert('✅ ' + result.message);
+        button.innerText = 'Đã đăng ký';
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-success');
+        button.disabled = true;
+      } else {
+        alert('❌ ' + (result.message || 'Lỗi không xác định'));
+        button.innerText = 'Đăng ký lại';
+        button.disabled = false;
+      }
+    }
+
+    async function unenrollCourse(courseId, button) {
+      const token = localStorage.getItem('token');
+      if (!token) return alert('Bạn chưa đăng nhập');
+
+      if (!confirm('Bạn chắc chắn muốn hủy đăng ký khóa học này?')) return;
+
+      button.disabled = true;
+      button.innerText = 'Đang hủy...';
+
+      const res = await fetch(`/api/student/unenroll/${courseId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        alert('✅ ' + result.message);
+        button.closest('.col-md-4').remove();
+      } else {
+        alert('❌ ' + (result.message || 'Lỗi không xác định'));
+        button.disabled = false;
+        button.innerText = 'Hủy đăng ký';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+
+    fetchCourses();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

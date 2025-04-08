@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Làm bài kiểm tra</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding: 40px;
+      background-color: #f4f7fa;
+      font-family: Arial, sans-serif;
+    }
+    .question {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="text-center mb-4">📝 Bài kiểm tra</h2>
+    <div id="quiz-container"></div>
+    <div class="text-center">
+      <button class="btn btn-success mt-3" onclick="submitQuiz()">📤 Nộp bài</button>
+    </div>
+    <div id="result" class="text-center mt-4 fw-bold text-success"></div>
+  </div>
+
+  <script>
+    let questions = [];
+  
+    async function loadQuestions(courseId) {
+      const res = await fetch(`/api/questions/${courseId}`);
+      questions = await res.json();
+  
+      const container = document.getElementById('quiz-container');
+  
+      if (!Array.isArray(questions) || questions.length === 0) {
+        container.innerHTML = `<p class="text-danger">❌ Không có câu hỏi nào cho khóa học này.</p>`;
+        return;
+      }
+  
+      container.innerHTML = questions.map((q, i) => `
+        <div class="question">
+          <p><strong>Câu ${i + 1}:</strong> ${q.question}</p>
+          ${q.options.map((opt, idx) => `
+            <div>
+              <label>
+                <input type="radio" name="q${i}" value="${idx}"> ${opt}
+              </label>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+  
+    function submitQuiz() {
+      let score = 0;
+      questions.forEach((q, i) => {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected && parseInt(selected.value) === q.correctIndex) {
+          score++;
+        }
+      });
+      document.getElementById('result').innerText = `✅ Bạn trả lời đúng ${score} / ${questions.length} câu.`;
+    }
+  
+    // ✅ Tự động lấy courseId từ URL
+    const params = new URLSearchParams(window.location.search);
+    const courseId = params.get('courseId');
+  
+    if (courseId) {
+      loadQuestions(courseId);
+    } else {
+      document.getElementById('quiz-container').innerHTML = `<p class="text-danger">❌ Không tìm thấy courseId trên URL.</p>`;
+    }
+  </script>
+  
+</body>
+</html>

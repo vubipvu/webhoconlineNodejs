@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat Messenger</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background-color: #f0f2f5; font-size: 18px; }
+    .chat-container {
+      display: flex;
+      height: 90vh;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .user-list {
+      width: 25%;
+      background: white;
+      border-right: 1px solid #ddd;
+      overflow-y: auto;
+    }
+    .user-list-item {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+    .messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+    }
+    .message-input {
+      display: flex;
+      border-top: 1px solid #ddd;
+      padding: 10px;
+    }
+    .message-input input {
+      flex: 1;
+      margin-right: 10px;
+      font-size: 18px;
+    }
+    .message-input button {
+      font-size: 18px;
+    }
+    .message {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+    .message.system {
+      color: #888;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+<div class="container mt-4">
+  <h3 class="text-center mb-4">💬 Chat Messenger</h3>
+  <div class="chat-container">
+    <div class="user-list p-3">
+      <h6>🟢 Người dùng online</h6>
+      <ul id="userList" class="list-group list-group-flush">
+        <li class="list-group-item user-list-item" onclick="selectReceiver(null)">
+          <span>👥</span> Chat tổng
+        </li>
+      </ul>
+    </div>
+    <div class="chat-box">
+      <div id="messages" class="messages"></div>
+      <div class="message-input">
+        <input id="input" type="text" class="form-control" placeholder="Nhập tin nhắn...">
+        <button id="sendBtn" class="btn btn-primary">Gửi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const token = localStorage.getItem('token');
+  let userName = 'Ẩn danh';
+  let userRole = '';
+
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      userName = payload.name || 'Ẩn danh';
+      userRole = payload.role || '';
+    } catch (e) {
+      console.warn('Token lỗi:', e);
+    }
+  }
+
+  const socket = io();
+  socket.emit('join', { token });
+
+  const userList = document.getElementById('userList');
+  const messages = document.getElementById('messages');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('sendBtn');
+
+  let currentReceiver = null;
+  let currentReceiverId = null;
+  let userMap = {};  // name → socket.id
+  const privateChats = {};  // name → [messages]
+
+  // Cập nhật danh sách người dùng
+  socket.on('updateUsers', function(users) {
+    userMap = {};
+    userList.innerHTML = `
+      <li class="list-group-item user-list-item" onclick="selectReceiver(null)">
+        <span>👥</span> Chat tổng
+      </li>
+    `;
+    users.forEach(user => {
+      if (user.name !== userName) {
+        userMap[user.name] = user.id;
+        const li = document.createElement('li');
+        li.className = 'list-group-item user-list-item';
+        li.innerHTML = `<span>👤</span> ${user.name} (${user.role})`;
+        li.onclick = () => {
+          currentReceiver = user.name;
+          currentReceiverId = user.id;
+          selectReceiver(user.name);
+        };
+        userList.appendChild(li);
+      }
+    });
+  });
+
+  function selectReceiver(name) {
+    currentReceiver = name;
+    messages.innerHTML = '';
+    if (name) {
+      const chatHistory = privateChats[name] || [];
+      chatHistory.forEach(msg => messages.appendChild(msg));
+      const systemMsg = document.createElement('div');
+      systemMsg.className = 'message system';
+      systemMsg.innerText = `💌 Đang chat riêng với ${name}`;
+      messages.appendChild(systemMsg);
+    } else {
+      const systemMsg = document.createElement('div');
+      systemMsg.className = 'message system';
+      systemMsg.innerText = '🗣️ Đang ở chế độ Chat tổng';
+      messages.appendChild(systemMsg);
+    }
+  }
+
+  sendBtn.onclick = () => {
+    const text = input.value.trim();
+    if (!text) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message text-end text-primary';
+    msgDiv.innerHTML = `<strong>${userName} (${userRole}):</strong> ${text}`;
+
+    if (currentReceiver && currentReceiverId) {
+      // ✅ Chat riêng
+      socket.emit('private message', {
+        toId: currentReceiverId,
+        text
+      });
+
+      messages.appendChild(msgDiv);
+      privateChats[currentReceiver] = privateChats[currentReceiver] || [];
+      privateChats[currentReceiver].push(msgDiv.cloneNode(true));
+    } else {
+      // ✅ Chat công khai
+      socket.emit('chat message', {
+        user: `${userName} (${userRole})`,
+        text
+      });
+      messages.appendChild(msgDiv);
+    }
+
+    messages.scrollTop = messages.scrollHeight;
+    input.value = '';
+  };
+
+  socket.on('chat message', (data) => {
+    if (!currentReceiver) {
+      const div = document.createElement('div');
+      div.className = 'message text-start text-dark';
+      div.innerHTML = `<strong>${data.user} (công khai):</strong> ${data.text}`;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+  });
+
+  socket.on('private message', (data) => {
+    const div = document.createElement('div');
+    div.className = 'message text-start text-success';
+    div.innerHTML = `<strong>${data.from} (riêng):</strong> ${data.text}`;
+
+    privateChats[data.from] = privateChats[data.from] || [];
+    privateChats[data.from].push(div.cloneNode(true));
+
+    if (currentReceiver === data.from) {
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+  });
+
+  socket.on('system message', (text) => {
+    const div = document.createElement('div');
+    div.className = 'message system text-center text-muted';
+    div.innerText = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  });
+</script>
+
+
+</body>
+</html>
