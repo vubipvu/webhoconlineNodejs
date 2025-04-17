@@ -1,0 +1,43 @@
+config:
+  target: 'http://localhost:3000'  # Địa chỉ API của bạn
+  phases:
+    - duration: 60
+      arrivalRate: 2  # 5 người dùng ảo yêu cầu mỗi giây
+
+scenarios:
+  # Kiểm thử API đăng ký
+  - flow:
+      - post:
+          url: '/api/auth/register'
+          json:
+            name: "Test User"
+            email: "testuser12345@example.com" 
+            password: "123456"
+            role: "student"
+
+  # Kiểm thử API đăng nhập
+  - flow:
+      - post:
+          url: '/api/auth/login'
+          json:
+            email: "testuser1@example.com"
+            password: "123456"
+
+  # Kiểm thử API khóa học (Tạo khóa học)
+  - flow:
+      - post:
+          url: '/api/courses'
+          json:
+            title: "Khóa học kiểm thử"
+            description: "Mô tả khóa học kiểm thử"
+            image: "path/to/image.jpg"
+
+  # Kiểm thử API câu hỏi (Thêm câu hỏi)
+  - flow:
+      - post:
+          url: '/api/questions'
+          json:
+            courseId: "courseId"  # Sử dụng ID khóa học hợp lệ
+            question: "Câu hỏi kiểm thử"
+            options: ["A", "B", "C", "D"]
+            correctIndex: 1
