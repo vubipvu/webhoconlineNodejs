@@ -42,28 +42,27 @@ app.get('/teacher', (req, res) => res.sendFile(path.join(__dirname, 'public', 't
 app.get('/teacher/create-course.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'teacher', 'create-course.html')));
 app.get('/student', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'dashboard.html')));
 
-// ================= SOCKET CHAT =================
-const socketUsers = {}; // socket.id -> { name, role }
+// SOCKET CHAT
+const socketUsers = {};
 
 io.on('connection', (socket) => {
   console.log('🟢 Kết nối:', socket.id);
 
-  socket.on('join', ({ token }) => {
+  socket.on('join', ({ token }, ack) => {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
       const { name, role } = payload;
       socketUsers[socket.id] = { name, role };
-
       io.emit('updateUsers', Object.entries(socketUsers).map(([id, u]) => ({ id, ...u })));
-      console.log(`✅ ${name} (${role}) đã tham gia`);
+      if (ack) ack(); // 👈 gọi lại cho client biết đã xong
     } catch (err) {
-      console.log('❌ Token không hợp lệ:', err.message);
       socket.emit('error', 'Token không hợp lệ');
     }
   });
+  
 
   socket.on('chat message', (msg) => {
-    io.emit('chat message', msg); // broadcast công khai
+    io.emit('chat message', msg);
   });
 
   socket.on('private message', ({ toId, text }) => {
@@ -78,14 +77,16 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('🔴 Ngắt kết nối:', socket.id);
     delete socketUsers[socket.id];
     io.emit('updateUsers', Object.entries(socketUsers).map(([id, u]) => ({ id, ...u })));
   });
 });
 
-// ================= SERVER START =================
+// Khởi chạy server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`✅ Server đang chạy tại http://localhost:${PORT}`);
 });
+
+// ✅ DÒNG NÀY QUAN TRỌNG: export app cho supertest
+module.exports = app;
