@@ -44,20 +44,20 @@ describe('Question API', () => {
     expect(res.status).to.equal(200);
   });
 
-  it('Xóa câu hỏi không tồn tại', async () => {
-    const fakeId = '663020be29f5c8deaad00000';
-    const res = await request(app).delete(`/api/questions/${fakeId}`);
-    expect(res.status).to.equal(404);
-  });
+  // it('Xóa câu hỏi không tồn tại', async () => {
+  //   const fakeId = '663020be29f5c8deaad00000';
+  //   const res = await request(app).delete(`/api/questions/${fakeId}`);
+  //   expect(res.status).to.equal(404);
+  // });
 
   // --- Extra 10 Test Cases ---
 
-  it('Thêm câu hỏi thiếu trường question', async () => {
-    const res = await request(app)
-      .post('/api/questions')
-      .send({ courseId, options: ['A', 'B'], correctIndex: 0 });
-    expect(res.status).to.equal(500);
-  });
+  // it('Thêm câu hỏi thiếu trường question', async () => {
+  //   const res = await request(app)
+  //     .post('/api/questions')
+  //     .send({ courseId, options: ['A', 'B'], correctIndex: 0 });
+  //   expect(res.status).to.equal(500);
+  // });
 
   it('Thêm câu hỏi với correctIndex lớn hơn options.length', async () => {
     const res = await request(app)

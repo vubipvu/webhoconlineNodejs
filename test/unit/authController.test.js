@@ -10,6 +10,10 @@ describe('Auth Controller - Hộp trắng', () => {
   afterEach(() => sinon.restore());
 
   describe('register()', () => {
+    afterEach(() => {
+      sinon.restore(); // cleanup stub sau mỗi test
+    });
+  
     it('trả lỗi khi thiếu dữ liệu đăng ký', async () => {
       const req = { body: {} };
       const res = {
@@ -20,10 +24,10 @@ describe('Auth Controller - Hộp trắng', () => {
       expect(res.status.calledWith(400)).to.be.true;
       expect(res.json.calledWithMatch({ message: sinon.match.string })).to.be.true;
     });
-
+  
     it('trả lỗi khi email đã tồn tại', async () => {
       sinon.stub(User, 'findOne').resolves({ email: 'existing@example.com' });
-
+  
       const req = {
         body: {
           name: 'Test',
@@ -40,7 +44,27 @@ describe('Auth Controller - Hộp trắng', () => {
       expect(res.status.calledWith(400)).to.be.true;
       expect(res.json.calledWithMatch({ message: sinon.match.string })).to.be.true;
     });
-
+  
+    it('trả lỗi khi role không hợp lệ', async () => {
+      sinon.stub(User, 'findOne').resolves(null); // không trùng email
+  
+      const req = {
+        body: {
+          name: 'Test',
+          email: 'new@example.com',
+          password: '123456',
+          role: 'admin', // role sai
+        },
+      };
+      const res = {
+        status: sinon.stub().returnsThis(),
+        json: sinon.stub(),
+      };
+      await register(req, res);
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(res.json.calledWithMatch({ message: 'Role không hợp lệ' })).to.be.true;
+    });
+  
     it('đăng ký thành công', async () => {
       sinon.stub(User, 'findOne').resolves(null);
       sinon.stub(User, 'create').resolves({
@@ -49,7 +73,7 @@ describe('Auth Controller - Hộp trắng', () => {
         email: 'test@example.com',
         role: 'student',
       });
-
+  
       const req = {
         body: {
           name: 'Test',
@@ -64,9 +88,13 @@ describe('Auth Controller - Hộp trắng', () => {
       };
       await register(req, res);
       expect(res.status.calledWith(201)).to.be.true;
-      expect(res.json.calledWithMatch({ message: sinon.match.string, user: sinon.match.object })).to.be.true;
+      expect(res.json.calledWithMatch({
+        message: sinon.match.string,
+        user: sinon.match.object,
+      })).to.be.true;
     });
   });
+  
 
   describe('login()', () => {
     it('trả lỗi khi không tìm thấy user', async () => {

@@ -1,8 +1,9 @@
 config:
-  target: 'http://localhost:3000'  # Địa chỉ API của bạn
+  target: 'http://localhost:3000'  
   phases:
-    - duration: 60
-      arrivalRate: 2  # 5 người dùng ảo yêu cầu mỗi giây
+    - duration: 5
+      arrivalRate: 10000
+
 
 scenarios:
   # Kiểm thử API đăng ký
@@ -11,9 +12,9 @@ scenarios:
           url: '/api/auth/register'
           json:
             name: "Test User"
-            email: "testuser12345@example.com" 
+            email: "testuser{{ randomInt(1000, 9999) }}@example.com" 
             password: "123456"
-            role: "student"
+            role: "teacher"
 
   # Kiểm thử API đăng nhập
   - flow:

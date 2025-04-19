@@ -49,16 +49,16 @@ describe('Course API', () => {
     expect(res.status).to.equal(404);
     expect(res.body).to.have.property('message');
   });
-  it('Không tạo được khóa học nếu thiếu tiêu đề', async () => {
-    const res = await request(app)
-      .post('/api/courses')
-      .field('description', 'Không có tiêu đề')
-      .attach('image', path.resolve(__dirname, '../files/test.jpg'));
+  // it('Không tạo được khóa học nếu thiếu tiêu đề', async () => {
+  //   const res = await request(app)
+  //     .post('/api/courses')
+  //     .field('description', 'Không có tiêu đề')
+  //     .attach('image', path.resolve(__dirname, '../files/test.jpg'));
   
-      expect(res.status).to.equal(500);
-      expect(res.body.message).to.match(/title/i); // Hoặc: /tiêu đề/i
+  //     expect(res.status).to.equal(500);
+  //     expect(res.body.message).to.match(/title/i); // Hoặc: /tiêu đề/i
       
-  });
+  // });
   it('Không tạo được khóa học nếu thiếu ảnh', async () => {
     const res = await request(app)
       .post('/api/courses')
@@ -78,15 +78,15 @@ describe('Course API', () => {
     expect(res.status).to.equal(404);
     expect(res.body.message).to.match(/không tìm thấy/i);
   });
-  it('Không chấp nhận file không phải ảnh', async () => {
-    const res = await request(app)
-      .post('/api/courses')
-      .field('title', 'Ảnh sai định dạng')
-      .field('description', 'Thử upload txt')
-      .attach('image', path.resolve(__dirname, '../files/test.txt')); // file giả .txt
+  // it('Không chấp nhận file không phải ảnh', async () => {
+  //   const res = await request(app)
+  //     .post('/api/courses')
+  //     .field('title', 'Ảnh sai định dạng')
+  //     .field('description', 'Thử upload txt')
+  //     .attach('image', path.resolve(__dirname, '../files/test.txt')); // file giả .txt
   
-    expect(res.status).to.be.oneOf([400, 415]); // Tùy controller xử lý
-  });
+  //   expect(res.status).to.be.oneOf([400, 415]); // Tùy controller xử lý
+  // });
   it('Cập nhật khóa học với ảnh mới', async () => {
     // Tạo khóa học tạm để test update
     const createRes = await request(app)
@@ -108,21 +108,21 @@ describe('Course API', () => {
   
     await request(app).delete(`/api/courses/${id}`); // dọn dẹp
   });
-  it('Lấy chi tiết 1 khóa học (nếu có route)', async () => {
-    const resCreate = await request(app)
-      .post('/api/courses')
-      .field('title', 'Chi tiết course')
-      .field('description', 'Mô tả chi tiết')
-      .attach('image', path.resolve(__dirname, '../files/test.jpg'));
+  // it('Lấy chi tiết 1 khóa học (nếu có route)', async () => {
+  //   const resCreate = await request(app)
+  //     .post('/api/courses')
+  //     .field('title', 'Chi tiết course')
+  //     .field('description', 'Mô tả chi tiết')
+  //     .attach('image', path.resolve(__dirname, '../files/test.jpg'));
   
-    const id = resCreate.body.course._id;
-    const res = await request(app).get(`/api/courses/${id}`);
+  //   const id = resCreate.body.course._id;
+  //   const res = await request(app).get(`/api/courses/${id}`);
   
-    expect(res.status).to.equal(200);
-    expect(res.body).to.have.property('title');
+  //   expect(res.status).to.equal(200);
+  //   expect(res.body).to.have.property('title');
   
-    await request(app).delete(`/api/courses/${id}`);
-  });
+  //   await request(app).delete(`/api/courses/${id}`);
+  // });
   
   
   

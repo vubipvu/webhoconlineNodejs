@@ -1,20 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+  <meta charset="UTF-8" />
   <title>Đăng ký</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 320px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      color: #333;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-  <h2>Đăng ký người dùng</h2>
-  <form id="signupForm">
-    <input type="text" name="name" placeholder="Họ tên" required /><br />
-    <input type="email" name="email" placeholder="Email" required /><br />
-    <input type="password" name="password" placeholder="Mật khẩu" required /><br />
-    <select name="role">
-      <option value="student">Học sinh</option>
-      <option value="teacher">Giáo viên</option>
-    </select><br />
-    <button type="submit">Đăng ký</button>
-  </form>
+  <div class="container">
+    <h2>Đăng ký người dùng</h2>
+    <form id="signupForm">
+      <input type="text" name="name" placeholder="Họ tên" required />
+      <input type="email" name="email" placeholder="Email" required />
+      <input type="password" name="password" placeholder="Mật khẩu" required />
+      <select name="role" required>
+        <option value="">Chọn vai trò</option>
+        <option value="student">Học sinh</option>
+        <option value="teacher">Giáo viên</option>
+      </select>
+      <button type="submit">Đăng ký</button>
+    </form>
+  </div>
 
   <script>
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
@@ -28,14 +82,18 @@
         role: form.role.value
       };
 
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
 
-      const result = await res.json();
-      alert(result.message);
+        const result = await res.json();
+        alert(result.message);
+      } catch (err) {
+        alert('Đăng ký thất bại. Vui lòng thử lại sau!');
+      }
     });
   </script>
 </body>
